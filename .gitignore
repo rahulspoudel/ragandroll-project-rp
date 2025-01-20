@@ -1,4 +1,6 @@
+# Custom Files and Dir
 .streamlit/secrets.toml
+ragandrollenv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
