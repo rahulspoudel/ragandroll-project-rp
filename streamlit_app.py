@@ -94,7 +94,7 @@ result = None
 
 # Tabs for the Application
 tab1, tab2, tab3, tab4 = st.tabs(
-    ["🔍 Search Songs", "✍️ Songs with similar lyrics",
+    ["🔍 Search Songs", "🎶 Songs with similar lyrics",
         "✍️ Songwriting Assistant", "📝 Lyrics Story"]
 )
 
@@ -140,7 +140,7 @@ with tab1:
 
 # Tab 2: Similar Songs and Lyrics
 with tab2:
-    st.subheader("✍️ Songs with similar lyrics")
+    st.subheader("🎶 Songs with similar lyrics")
     if result is not None and not result.empty:
         try:
             search_term = result['LYRICS'][0]
