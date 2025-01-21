@@ -20,8 +20,8 @@ def generate_draft(prompt):
     escaped_prompt = prompt.replace("'", "''")
     query = f"""
     SELECT SNOWFLAKE.CORTEX.COMPLETE(
-        'mistral-large2', 
-        'Based on these lyrics, create a new version:\\n\\n{escaped_prompt}'
+        'mistral-large2',
+        'Based on these lyrics, create a new version:\\n\\n{escaped_prompt} \\n Also donot include some of the last lines of the lyrics looking like this \\n ______________ \\n Name      Numb \\n Artist    Linkin Park \\n Album     Meteora \\n Track no  13 \\n Year      2003 \\n for this draft generation task \\n'
     ) AS draft
     """
     return session.sql(query).to_pandas()["DRAFT"][0]
@@ -31,7 +31,7 @@ def get_story_from_lyrics(prompt):
     escaped_prompt = prompt.replace("'", "''")
     query = f"""
     SELECT SNOWFLAKE.CORTEX.TRY_COMPLETE(
-        'mistral-large2', 
+        'mistral-large2',
         'Based on these lyrics and artists and album details mentioned at the end the lyrics, write the original backstory of the song:\\n\\n{escaped_prompt}'
     ) AS story
     """
@@ -57,7 +57,7 @@ def generate_translation(prompt, target_language):
     query = f"""
     SELECT SNOWFLAKE.CORTEX.COMPLETE(
         'mistral-large2',
-        'Translate these lyrics into {target_language} while preserving poetic structure and meaning:\\n\\n{escaped_prompt}'
+        'Translate these lyrics into {target_language} while preserving poetic structure and meaning:\\n\\n{escaped_prompt} \\n Also donot include some of the last lines of the lyrics looking like this \\n ______________ \\n Name      Numb \\n Artist    Linkin Park \\n Album     Meteora \\n Track no  13 \\n Year      2003 \\n for this translation.'
     ) AS translation
     """
     return session.sql(query).to_pandas()["TRANSLATION"][0]
@@ -90,6 +90,10 @@ def gradient_text(text, gradient_colors):
 
 # App Title
 gradient_text("🎶 Ly-Lyric App 🎶", ["#ff512f", "#dd2476", "#8e44ad"])
+st.markdown(
+    "Find songs, create lyrics, and explore music in a whole new way with Ly-Lyric App! 🎵✨",
+    unsafe_allow_html=True
+)
 
 # Initialize session state for result
 if "search_result" not in st.session_state:
@@ -111,6 +115,9 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(
 # Tab 1: Search Songs
 with tab1:
     st.subheader("🔍 Search for a Song")
+    st.markdown(
+        "Find your favorite songs by entering a song title, artist name, or lyrics snippet. Use this as your starting point for creative exploration!"
+    )
     song_title = st.text_input(
         "Enter a song title, artist name, or some lyrics to begin:", ""
     )
@@ -144,6 +151,9 @@ with tab1:
 # Tab 2: Similar Songs and Lyrics
 with tab2:
     st.subheader("🎶 Songs with similar lyrics")
+    st.markdown(
+        "Discover songs with lyrics similar in theme or tone to your search. Get inspired by related works from other artists!"
+    )
     if st.session_state["search_result"] is not None:
         try:
             search_term = st.session_state["search_result"]['LYRICS'][0]
@@ -181,6 +191,9 @@ with tab2:
 # Tab 3: Songwriting Assistant
 with tab3:
     st.subheader("✍️ Songwriting Assistant")
+    st.markdown(
+        "Generate new lyric drafts inspired by your selected song. Explore different tones, emotions, or styles to refine your creativity!"
+    )
     if st.session_state["search_result"] is not None:
         try:
             search_term = st.session_state["search_result"]['LYRICS'][0]
@@ -214,6 +227,9 @@ with tab3:
 # Tab 4: Lyrics Story
 with tab4:
     st.subheader("📝 Lyrics Story")
+    st.markdown(
+        "Uncover the story behind the song. Get insights into the inspiration and background that shaped the lyrics."
+    )
     if st.session_state["search_result"] is not None:
         try:
             search_term = st.session_state["search_result"]['LYRICS'][0]
@@ -226,7 +242,7 @@ with tab4:
             story = get_story_from_lyrics(search_term)
 
             # Display the story
-            st.text_area("Generated Story", story, height=300, key="story")
+            st.text_area("Story", story, height=300, key="story")
 
         except Exception as e:
             st.error(f"An error occurred while fetching the story: {e}")
@@ -236,6 +252,9 @@ with tab4:
 # Tab 5: Multi-Language Lyrics Translation
 with tab5:
     st.subheader("🌎 Multi-Language Lyrics Translation")
+    st.markdown(
+        "Translate lyrics into multiple languages while maintaining their poetic structure and essence. Perfect for reaching a global audience!"
+    )
     available_languages = ["Spanish", "French", "German", "Japanese", "Nepali"]
 
     if st.session_state["search_result"] is not None:
@@ -261,11 +280,16 @@ with tab5:
 # Tab 6: Mood-Based Recommendations
 with tab6:
     st.subheader("🎭 Mood-Based Recommendations (Comming soon)")
+    st.markdown(
+        "Describe your mood, and we'll recommend songs that resonate with your feelings. Perfect for curating playlists or finding the right vibe!"
+    )
 
 # Tab 7: Song to Art Generation
 with tab7:
     st.subheader("🎨 Song to Art Generator (Comming soon)")
-
+    st.markdown(
+        "Generate artwork inspired by a song. Use lyrics and mood to create a visual representation of the song's essence. (Coming Soon!)"
+    )
 
 # Footer
 st.markdown("---")
