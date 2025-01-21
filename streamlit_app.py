@@ -16,6 +16,35 @@ session = Session.builder.configs(connection_parameters).create()
 root = Root(session)
 
 
+def generate_draft(prompt):
+    # Escape any single quotes in the prompt
+    escaped_prompt = prompt.replace("'", "''")
+
+    # query = f"""
+    # SELECT SNOWFLAKE.CORTEX.COMPLETE(
+    #     PARSE_JSON('{{"model": "mistral-large2", "prompt": "Based on these lyrics, create a new version:\\n\\n{escaped_prompt}"}}'::string)
+    # ) AS draft
+    # """
+    query = f"""
+    SELECT SNOWFLAKE.CORTEX.COMPLETE('mistral-large2', 'Based on these lyrics, create a new version:\\n\\n{escaped_prompt}') AS draft
+    """
+    return session.sql(query).to_pandas()["DRAFT"][0]
+
+
+def complete(model, prompt):
+    """
+    Generate a completion for the given prompt using the specified model.
+
+    Args:
+        model (str): The name of the model to use for completion.
+        prompt (str): The prompt to generate a completion for.
+
+    Returns:
+        str: The generated completion.
+    """
+    return session.sql("SELECT snowflake.cortex.complete(?,?)", (model, prompt)).collect()[0][0]
+
+
 def query_cortex_search_service(query, limit=10):
     """
     Query the Cortex Search Service for similar lyrics.
@@ -68,8 +97,9 @@ gradient_text("🎶 Ly-Lyric App 🎶", ["#ff512f", "#dd2476", "#8e44ad"])
 result = None
 
 # Tabs for the Application
-tab1, tab2, tab3 = st.tabs(
-    ["🔍 Search Songs", "✍️ Songs with similar lyrics", "✍️ Songwriting Assistant"]
+tab1, tab2, tab3, tab4 = st.tabs(
+    ["🔍 Search Songs", "✍️ Songs with similar lyrics",
+        "✍️ Songwriting Assistant", "📝 Lyrics Summary"]
 )
 
 # Tab 1: Search Songs
@@ -143,31 +173,57 @@ with tab2:
     else:
         st.info("Please search for a song in the **Search Songs** tab first.")
 
+
 # Tab 3: Songwriting Assistant
 with tab3:
     st.subheader("✍️ Songwriting Assistant")
     if result is not None and not result.empty:
         try:
+            # Use the closest matching lyrics as the search term
             search_term = result['LYRICS'][0]
             st.write(
-                f"Generating lyrics inspired by: **{result['SONG_TITLE'][0]}**")
+                f"Generating draft lyrics inspired by: **{result['SONG_TITLE'][0]}** by **{result['ARTIST'][0]}**"
+            )
 
-            generated_lyrics = """
-            Imagine a world without any walls,
-            Where everyone can stand tall.
-            No borders, no fights, just love in sight,
-            Together we build a brighter light.
-            """
-            st.text_area("Generated Lyrics", generated_lyrics, height=150)
+            st.write("### 🎵 Draft Versions")
+            draft_1 = generate_draft(search_term)
+            draft_2 = generate_draft(search_term + "\nMake it very funny.")
+            # draft_3 = generate_draft(
+            #     search_term + "\nMake it simpler and inspiring.")
 
-            st.markdown("### ✏️ Edit the Generated Lyrics")
-            edited_lyrics = st.text_area(
-                "Edit Lyrics Below:", generated_lyrics, height=150)
-            if st.button("Save Changes"):
-                st.success("Your changes have been saved!")
-                st.text_area("Final Lyrics", edited_lyrics, height=150)
+            # Using the same draft for limiting the hits
+            # draft_2 = draft_1
+            draft_3 = draft_1
+
+            # Display drafts for user review
+            st.text_area("Draft 1", draft_1, height=150, key="draft_1")
+            st.text_area("Draft 2", draft_2, height=150, key="draft_2")
+            st.text_area("Draft 3", draft_3, height=150, key="draft_3")
+
+            st.markdown("### ✏️ Edit and Finalize Your Lyrics")
+            st.text("Feature coming soon")
+            # selected_draft = st.radio(
+            #     "Select a draft to edit:",
+            #     options=["Draft 1", "Draft 2", "Draft 3"],
+            #     index=0
+            # )
+            # draft_content = draft_1 if selected_draft == "Draft 1" else (
+            #     draft_2 if selected_draft == "Draft 2" else draft_3
+            # )
+
+            # edited_lyrics = st.text_area(
+            #     "Edit Lyrics Below:",
+            #     draft_content,
+            #     height=150,
+            #     key="edited_lyrics"
+            # )
+
+            # if st.button("Save Changes"):
+            #     st.success("Your changes have been saved!")
+            #     st.text_area("Final Lyrics", edited_lyrics, height=150)
+
         except Exception as e:
-            st.error(f"An error occurred: {e}")
+            st.error(f"An error occurred while generating lyrics: {e}")
     else:
         st.info("Please search for a song in the **Search Songs** tab first.")
 
