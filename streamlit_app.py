@@ -17,34 +17,28 @@ root = Root(session)
 
 
 def generate_draft(prompt):
-    # Escape any single quotes in the prompt
     escaped_prompt = prompt.replace("'", "''")
-
-    # query = f"""
-    # SELECT SNOWFLAKE.CORTEX.COMPLETE(
-    #     PARSE_JSON('{{"model": "mistral-large2", "prompt": "Based on these lyrics, create a new version:\\n\\n{escaped_prompt}"}}'::string)
-    # ) AS draft
-    # """
     query = f"""
-    SELECT SNOWFLAKE.CORTEX.COMPLETE('mistral-large2', 'Based on these lyrics, create a new version:\\n\\n{escaped_prompt}') AS draft
+    SELECT SNOWFLAKE.CORTEX.COMPLETE(
+        'mistral-large2', 
+        'Based on these lyrics, create a new version:\\n\\n{escaped_prompt}'
+    ) AS draft
     """
     return session.sql(query).to_pandas()["DRAFT"][0]
 
 
 def get_story_from_lyrics(prompt):
-    # Escape any single quotes in the prompt
     escaped_prompt = prompt.replace("'", "''")
-
     query = f"""
-    SELECT SNOWFLAKE.CORTEX.TRY_COMPLETE('mistral-large2', 'Based on these lyrics and artists and album details mentioned at the end the lyrics, write the original backstory of the song:\\n\\n{escaped_prompt}') AS story
+    SELECT SNOWFLAKE.CORTEX.TRY_COMPLETE(
+        'mistral-large2', 
+        'Based on these lyrics and artists and album details mentioned at the end the lyrics, write the original backstory of the song:\\n\\n{escaped_prompt}'
+    ) AS story
     """
     return session.sql(query).to_pandas()["STORY"][0]
 
 
 def query_cortex_search_service(query, limit=10):
-    """
-    Query the Cortex Search Service for similar lyrics.
-    """
     cortex_search_service = (
         root.databases[st.secrets["snowflakeconnection"]["database"]]
         .schemas[st.secrets["snowflakeconnection"]["schema"]]
@@ -58,6 +52,17 @@ def query_cortex_search_service(query, limit=10):
     return results.results
 
 
+def generate_translation(prompt, target_language):
+    escaped_prompt = prompt.replace("'", "''")
+    query = f"""
+    SELECT SNOWFLAKE.CORTEX.COMPLETE(
+        'mistral-large2',
+        'Translate these lyrics into {target_language} while preserving poetic structure and meaning:\\n\\n{escaped_prompt}'
+    ) AS translation
+    """
+    return session.sql(query).to_pandas()["TRANSLATION"][0]
+
+
 # Page Configuration
 st.set_page_config(
     page_title="Ly-Lyric App",
@@ -68,9 +73,6 @@ st.set_page_config(
 
 
 def gradient_text(text, gradient_colors):
-    """
-    Display gradient-styled text for headers.
-    """
     html_code = f"""
     <h1 style="
     background: linear-gradient(to right, {', '.join(gradient_colors)});
@@ -89,33 +91,34 @@ def gradient_text(text, gradient_colors):
 # App Title
 gradient_text("🎶 Ly-Lyric App 🎶", ["#ff512f", "#dd2476", "#8e44ad"])
 
-# Initialize global variable for result
-result = None
+# Initialize session state for result
+if "search_result" not in st.session_state:
+    st.session_state["search_result"] = None
 
 # Tabs for the Application
-tab1, tab2, tab3, tab4 = st.tabs(
-    ["🔍 Search Songs", "🎶 Songs with similar lyrics",
-        "✍️ Songwriting Assistant", "📝 Lyrics Story"]
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(
+    [
+        "🔍 Search Songs",
+        "🎶 Songs with similar lyrics",
+        "✍️ Songwriting Assistant",
+        "📝 Lyrics Story",
+        "🌎 Multi-Language Translation",
+        "🎭 Mood-Based Recommendations",
+        "🎨 Song to Art Generator"
+    ]
 )
 
 # Tab 1: Search Songs
 with tab1:
     st.subheader("🔍 Search for a Song")
     song_title = st.text_input(
-        "Enter a song title or artist name or some lyrics words to begin:", "")
+        "Enter a song title, artist name, or some lyrics to begin:", ""
+    )
 
     if st.button("Search"):
         if not song_title.strip():
-            st.warning("Please enter a valid song title or artist name.")
+            st.warning("Please enter a valid input.")
         else:
-            # query = f"""
-            # SELECT song_title, artist, album, lyrics
-            # FROM LYLYRIC
-            # WHERE LOWER(song_title) LIKE '%{song_title.lower()}%'
-            # OR LOWER(artist) LIKE '%{song_title.lower()}%'
-            # OR LOWER(album) LIKE '%{song_title.lower()}%'
-            # LIMIT 1
-            # """
             query = f"""
             SELECT song_title, artist, album, lyrics
             FROM LYLYRIC
@@ -124,44 +127,50 @@ with tab1:
             """
             try:
                 result = session.sql(query).to_pandas()
-
                 if not result.empty:
+                    st.session_state["search_result"] = result
                     st.write("🎵 **Song Found:**")
                     st.write(f"**Title:** {result['SONG_TITLE'][0]}")
                     st.write(f"**Artist:** {result['ARTIST'][0]}")
                     st.write(f"**Album:** {result['ALBUM'][0]}")
                 else:
-                    result = None
+                    st.session_state["search_result"] = None
                     st.error(
                         "No matching song found. Try a different search term.")
             except Exception as e:
-                result = None
+                st.session_state["search_result"] = None
                 st.error(f"An error occurred while fetching data: {e}")
 
 # Tab 2: Similar Songs and Lyrics
 with tab2:
     st.subheader("🎶 Songs with similar lyrics")
-    if result is not None and not result.empty:
+    if st.session_state["search_result"] is not None:
         try:
-            search_term = result['LYRICS'][0]
+            search_term = st.session_state["search_result"]['LYRICS'][0]
             results = query_cortex_search_service(search_term)
 
             if results:
-                # st.write("🎵 **Similar Songs:**")
                 for item in results:
                     with st.container():
                         col1, col2 = st.columns([1, 4])
                         with col1:
                             st.markdown(
-                                f"### 🎵 {item.get('song_title', 'Unknown Title')}")
+                                f"### 🎵 {item.get('song_title', 'Unknown Title')}"
+                            )
                         with col2:
                             st.markdown(
-                                f"**Artist:** {item.get('artist', 'Unknown Artist')}")
+                                f"**Artist:** {item.get('artist', 'Unknown Artist')}"
+                            )
                             st.markdown(
-                                f"**Album:** {item.get('album', 'Unknown Album')}")
-                            st.text_area("Lyrics", item.get('lyrics', 'No lyrics available'),
-                                         height=100, key=f"lyrics_{item.get('song_title')}")
-                        st.markdown("---")  # Divider between cards
+                                f"**Album:** {item.get('album', 'Unknown Album')}"
+                            )
+                            st.text_area(
+                                "Lyrics",
+                                item.get('lyrics', 'No lyrics available'),
+                                height=100,
+                                key=f"lyrics_{item.get('song_title')}",
+                            )
+                        st.markdown("---")
             else:
                 st.error("No similar songs found.")
         except Exception as e:
@@ -169,56 +178,33 @@ with tab2:
     else:
         st.info("Please search for a song in the **Search Songs** tab first.")
 
-
 # Tab 3: Songwriting Assistant
 with tab3:
     st.subheader("✍️ Songwriting Assistant")
-    if result is not None and not result.empty:
+    if st.session_state["search_result"] is not None:
         try:
-            # Use the closest matching lyrics as the search term
-            search_term = result['LYRICS'][0]
+            search_term = st.session_state["search_result"]['LYRICS'][0]
             st.write(
-                f"Generating draft lyrics inspired by: **{result['SONG_TITLE'][0]}** by **{result['ARTIST'][0]}**"
+                f"Generating draft lyrics inspired by: **{st.session_state['search_result']['SONG_TITLE'][0]}** by **{st.session_state['search_result']['ARTIST'][0]}**"
             )
 
+            # Generate drafts using Snowflake Cortex
             st.write("### 🎵 Draft Versions")
             draft_1 = generate_draft(search_term)
             draft_2 = generate_draft(search_term + "\nMake it very funny.")
-            # draft_3 = generate_draft(
-            #     search_term + "\nMake it simpler and inspiring.")
-
-            # Using the same draft for limiting the hits
-            # draft_2 = draft_1
-            draft_3 = draft_1
+            draft_3 = generate_draft(
+                search_term + "\nMake it simpler and inspiring.")
 
             # Display drafts for user review
             st.text_area("Draft 1 (Normal)", draft_1,
                          height=300, key="draft_1")
             st.text_area("Draft 2 (Funny)", draft_2, height=300, key="draft_2")
-            st.text_area("Draft 3 (Normal)", draft_3,
+            st.text_area("Draft 3 (Inspiring)", draft_3,
                          height=300, key="draft_3")
 
+            # Placeholder for future editing feature
             st.markdown("### ✏️ Edit and Finalize Your Lyrics")
-            st.text("Feature coming soon")
-            # selected_draft = st.radio(
-            #     "Select a draft to edit:",
-            #     options=["Draft 1", "Draft 2", "Draft 3"],
-            #     index=0
-            # )
-            # draft_content = draft_1 if selected_draft == "Draft 1" else (
-            #     draft_2 if selected_draft == "Draft 2" else draft_3
-            # )
-
-            # edited_lyrics = st.text_area(
-            #     "Edit Lyrics Below:",
-            #     draft_content,
-            #     height=150,
-            #     key="edited_lyrics"
-            # )
-
-            # if st.button("Save Changes"):
-            #     st.success("Your changes have been saved!")
-            #     st.text_area("Final Lyrics", edited_lyrics, height=150)
+            st.text("Feature coming soon: Select and finalize your favorite draft.")
 
         except Exception as e:
             st.error(f"An error occurred while generating lyrics: {e}")
@@ -228,25 +214,58 @@ with tab3:
 # Tab 4: Lyrics Story
 with tab4:
     st.subheader("📝 Lyrics Story")
-    if result is not None and not result.empty:
+    if st.session_state["search_result"] is not None:
         try:
-            # Use the closest matching lyrics as the search term
-            search_term = result['LYRICS'][0]
+            search_term = st.session_state["search_result"]['LYRICS'][0]
             st.write(
-                f"Story behind the song: **{result['SONG_TITLE'][0]}** by **{result['ARTIST'][0]}**"
+                f"Story behind the song: **{st.session_state['search_result']['SONG_TITLE'][0]}** by **{st.session_state['search_result']['ARTIST'][0]}**"
             )
 
-            st.write("### 🎵 Story of the song and lyric")
-            draft_story = get_story_from_lyrics(search_term)
+            # Generate story using Snowflake Cortex
+            st.write("### 🎵 Story of the Song")
+            story = get_story_from_lyrics(search_term)
 
-            # Display drafts for user review
-            st.text_area("", draft_story,
-                         height=300, key="draft_story")
+            # Display the story
+            st.text_area("Generated Story", story, height=300, key="story")
 
         except Exception as e:
-            st.error(f"An error occurred while getting story: {e}")
+            st.error(f"An error occurred while fetching the story: {e}")
     else:
         st.info("Please search for a song in the **Search Songs** tab first.")
+
+# Tab 5: Multi-Language Lyrics Translation
+with tab5:
+    st.subheader("🌎 Multi-Language Lyrics Translation")
+    available_languages = ["Spanish", "French", "German", "Japanese", "Nepali"]
+
+    if st.session_state["search_result"] is not None:
+        original_lyrics = st.session_state["search_result"]['LYRICS'][0]
+        st.text_area("Original Lyrics", original_lyrics, height=200)
+
+        target_language = st.selectbox(
+            "Select a language for translation:", available_languages, key="target_language"
+        )
+
+        if st.button("Translate Lyrics", key="translate"):
+            try:
+                translated_lyrics = generate_translation(
+                    original_lyrics, target_language)
+                st.text_area(
+                    f"Translated Lyrics in {target_language}", translated_lyrics, height=200
+                )
+            except Exception as e:
+                st.error(f"An error occurred while translating lyrics: {e}")
+    else:
+        st.info("Please search for a song in the **Search Songs** tab first.")
+
+# Tab 6: Mood-Based Recommendations
+with tab6:
+    st.subheader("🎭 Mood-Based Recommendations (Comming soon)")
+
+# Tab 7: Song to Art Generation
+with tab7:
+    st.subheader("🎨 Song to Art Generator (Comming soon)")
+
 
 # Footer
 st.markdown("---")
