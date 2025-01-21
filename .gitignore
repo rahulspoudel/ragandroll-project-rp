@@ -1,6 +1,7 @@
 # Custom Files and Dir
 .streamlit/secrets.toml
 ragandrollenv
+streamlit_app_dirty.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
