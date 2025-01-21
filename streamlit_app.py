@@ -31,18 +31,14 @@ def generate_draft(prompt):
     return session.sql(query).to_pandas()["DRAFT"][0]
 
 
-def complete(model, prompt):
-    """
-    Generate a completion for the given prompt using the specified model.
+def get_story_from_lyrics(prompt):
+    # Escape any single quotes in the prompt
+    escaped_prompt = prompt.replace("'", "''")
 
-    Args:
-        model (str): The name of the model to use for completion.
-        prompt (str): The prompt to generate a completion for.
-
-    Returns:
-        str: The generated completion.
+    query = f"""
+    SELECT SNOWFLAKE.CORTEX.TRY_COMPLETE('mistral-large2', 'Based on these lyrics and artists and album details mentioned at the end the lyrics, write the original backstory of the song:\\n\\n{escaped_prompt}') AS story
     """
-    return session.sql("SELECT snowflake.cortex.complete(?,?)", (model, prompt)).collect()[0][0]
+    return session.sql(query).to_pandas()["STORY"][0]
 
 
 def query_cortex_search_service(query, limit=10):
@@ -99,7 +95,7 @@ result = None
 # Tabs for the Application
 tab1, tab2, tab3, tab4 = st.tabs(
     ["🔍 Search Songs", "✍️ Songs with similar lyrics",
-        "✍️ Songwriting Assistant", "📝 Lyrics Summary"]
+        "✍️ Songwriting Assistant", "📝 Lyrics Story"]
 )
 
 # Tab 1: Search Songs
@@ -196,9 +192,11 @@ with tab3:
             draft_3 = draft_1
 
             # Display drafts for user review
-            st.text_area("Draft 1", draft_1, height=150, key="draft_1")
-            st.text_area("Draft 2", draft_2, height=150, key="draft_2")
-            st.text_area("Draft 3", draft_3, height=150, key="draft_3")
+            st.text_area("Draft 1 (Normal)", draft_1,
+                         height=300, key="draft_1")
+            st.text_area("Draft 2 (Funny)", draft_2, height=300, key="draft_2")
+            st.text_area("Draft 3 (Normal)", draft_3,
+                         height=300, key="draft_3")
 
             st.markdown("### ✏️ Edit and Finalize Your Lyrics")
             st.text("Feature coming soon")
@@ -224,6 +222,29 @@ with tab3:
 
         except Exception as e:
             st.error(f"An error occurred while generating lyrics: {e}")
+    else:
+        st.info("Please search for a song in the **Search Songs** tab first.")
+
+# Tab 4: Lyrics Story
+with tab4:
+    st.subheader("📝 Lyrics Story")
+    if result is not None and not result.empty:
+        try:
+            # Use the closest matching lyrics as the search term
+            search_term = result['LYRICS'][0]
+            st.write(
+                f"Story behind the song: **{result['SONG_TITLE'][0]}** by **{result['ARTIST'][0]}**"
+            )
+
+            st.write("### 🎵 Story of the song and lyric")
+            draft_story = get_story_from_lyrics(search_term)
+
+            # Display drafts for user review
+            st.text_area("", draft_story,
+                         height=300, key="draft_story")
+
+        except Exception as e:
+            st.error(f"An error occurred while getting story: {e}")
     else:
         st.info("Please search for a song in the **Search Songs** tab first.")
 
