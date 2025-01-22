@@ -1,15 +1,17 @@
 # 🎶 Ly-Lyric App
 
-Ly-Lyric App is an interactive platform powered by **Mistral-large2** and **Snowflake Cortex Search**, designed for music enthusiasts and lyricists. Discover songs, generate creative lyrics, explore stories behind songs, translate lyrics into multiple languages, and much more.
+Ly-Lyric App is an interactive platform powered by **Snowflake Cortex Search**, **Mistral-large2** and **Streamlit** designed for music enthusiasts and lyricists. Discover songs, generate creative lyrics, explore stories behind songs, translate lyrics into multiple languages, and much more.
 
 While the app leverages advanced **LLM (Large Language Model)** capabilities for creative generation and translations, some outputs may vary in accuracy and should be considered as creative suggestions rather than absolute interpretations.
+
+> Data used for this project is from the github repo [Open Lyrics Database](https://github.com/Lyrics/lyrics-database). Being used for experimental purpose in this project.
 
 ---
 
 ## 🌟 Features
 
 1. **Search Songs**  
-   Find songs by title, artist, or lyrics snippets using the power of **Cortex Search** for efficient retrieval.
+   Find songs by title, artist, or lyrics.
 
 2. **Songs with Similar Lyrics**  
    Discover songs with lyrics similar in theme or tone to your search, enabled by **semantic search capabilities** of Cortex.
@@ -58,3 +60,5 @@ While the app leverages advanced **LLM (Large Language Model)** capabilities for
    > streamlit run streamlit_app.py
 
 5. Open your browser and navigate to: http://localhost:8501
+
+> Note: Features and entire project is being developed experimentally.

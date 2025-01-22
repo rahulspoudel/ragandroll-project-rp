@@ -116,7 +116,7 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(
 with tab1:
     st.subheader("🔍 Search for a Song")
     st.markdown(
-        "Find your favorite songs by entering a song title, artist name, or lyrics snippet. Use this as your starting point for creative exploration!"
+        "Find your favorite songs by entering a song title, artist name, or lyrics."
     )
     song_title = st.text_input(
         "Enter a song title, artist name, or some lyrics to begin:", ""
@@ -152,7 +152,7 @@ with tab1:
 with tab2:
     st.subheader("🎶 Songs with similar lyrics")
     st.markdown(
-        "Discover songs with lyrics similar in theme or tone to your search. Get inspired by related works from other artists!"
+        "Discover songs with lyrics similar in theme or tone to your search."
     )
     if st.session_state["search_result"] is not None:
         try:
@@ -192,7 +192,7 @@ with tab2:
 with tab3:
     st.subheader("✍️ Songwriting Assistant")
     st.markdown(
-        "Generate new lyric drafts inspired by your selected song. Explore different tones, emotions, or styles to refine your creativity!"
+        "Generate new lyric drafts inspired by your selected song. Explore different tones, emotions, or styles."
     )
     if st.session_state["search_result"] is not None:
         try:
@@ -253,7 +253,7 @@ with tab4:
 with tab5:
     st.subheader("🌎 Multi-Language Lyrics Translation")
     st.markdown(
-        "Translate lyrics into multiple languages while maintaining their poetic structure and essence. Perfect for reaching a global audience!"
+        "Translate lyrics into multiple languages while maintaining their poetic structure and essence."
     )
     available_languages = ["Spanish", "French", "German", "Japanese", "Nepali"]
 
@@ -281,7 +281,7 @@ with tab5:
 with tab6:
     st.subheader("🎭 Mood-Based Recommendations (Comming soon)")
     st.markdown(
-        "Describe your mood, and we'll recommend songs that resonate with your feelings. Perfect for curating playlists or finding the right vibe!"
+        "Describe your mood, and we'll recommend songs that resonate with your feelings."
     )
 
 # Tab 7: Song to Art Generation
