@@ -279,14 +279,14 @@ with tab5:
 
 # Tab 6: Mood-Based Recommendations
 with tab6:
-    st.subheader("🎭 Mood-Based Recommendations (Comming soon)")
+    st.subheader("🎭 Mood-Based Recommendations (Coming soon)")
     st.markdown(
         "Describe your mood, and we'll recommend songs that resonate with your feelings."
     )
 
 # Tab 7: Song to Art Generation
 with tab7:
-    st.subheader("🎨 Song to Art Generator (Comming soon)")
+    st.subheader("🎨 Song to Art Generator (Coming soon)")
     st.markdown(
         "Generate artwork inspired by a song. Use lyrics and mood to create a visual representation of the song's essence. (Coming Soon!)"
     )
