@@ -6,29 +6,30 @@ While the app leverages advanced **LLM (Large Language Model)** capabilities for
 
 > Data used for this project is from the github repo [Open Lyrics Database](https://github.com/Lyrics/lyrics-database). Being used for experimental purpose in this project.
 
+> Submission for hackathon - RAG 'n' ROLL Amp up Search with Snowflake & Mistral ( https://snowflake-mistral-rag.devpost.com/ )
 ---
 
 ## 🌟 Features
 
-1. **Search Songs**  
+1. **Search Songs**
    Find songs by title, artist, or lyrics.
 
-2. **Songs with Similar Lyrics**  
+2. **Songs with Similar Lyrics**
    Discover songs with lyrics similar in theme or tone to your search, enabled by **semantic search capabilities** of Cortex.
 
-3. **Songwriting Assistant**  
+3. **Songwriting Assistant**
    Generate multiple drafts of lyrics inspired by your favorite songs. These drafts are created using the **Mistral-large2** model, offering various tones and styles.
 
-4. **Lyrics Story**  
+4. **Lyrics Story**
    Dive into the backstory and inspiration behind the lyrics of a song, crafted using the **Mistral-large2** model.
 
-5. **Multi-Language Lyrics Translation**  
+5. **Multi-Language Lyrics Translation**
    Translate lyrics into popular languages like Spanish, French, German, Japanese, and Nepali. While the translations use advanced **LLM technology**, the poetic and contextual accuracy may not always be perfect.
 
-6. **Mood-Based Recommendations (Coming Soon)**  
+6. **Mood-Based Recommendations (Coming Soon)**
    Describe your mood, and we'll recommend songs that resonate with your feelings, using **Cortex Search** and **LLM-based interpretations**.
 
-7. **Song to Art Generator (Coming Soon)**  
+7. **Song to Art Generator (Coming Soon)**
    Generate stunning artwork inspired by song lyrics and mood, offering a visual representation of the song's essence.
 
 ---
